@@ -17,6 +17,27 @@
       text-align: center;
       padding: 40px;
       background-color: #e8ded6;
+      header {
+  text-align: center;
+  padding: 60px 20px;
+  background: #e8ded6;
+  position: relative;
+  overflow: hidden;
+}
+
+header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background-image: url("https://drive.google.com/uc?export=view&id=1r1p6KcDTtPxGaVc7sxG9Qc5OTHlF69Z");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.15; /* 👈 efecto marca de agua */
     }
 
     .container {
