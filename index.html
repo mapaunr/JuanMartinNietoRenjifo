@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Regalos Juan Martín</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #f7f4f1;
+      margin: 0;
+      color: #5a4a42;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px;
+      background-color: #e8ded6;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .content {
+      padding: 15px;
+      text-align: center;
+    }
+
+    .available { color: #7a9e7e; }
+    .taken { color: #b85c5c; }
+
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 20px;
+      background: #c8a27c;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: gray;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Lista de Regalos</h1>
+  <p>Baby Shower Juan Martín 🤍</p>
+</header>
+
+<div class="container" id="gifts"></div>
+
+<script>
+const gifts = [
+  {
+    id: 1,
+    name: "Momcozy Kit de limpieza para biberones",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 2,
+    name: "BAGSMART Mochila pañalera",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 3,
+    name: "Esterilizador Momcozy",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 4,
+    name: "Muselinas Comfy Cubs",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 5,
+    name: "Silla alta de gancho",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 6,
+    name: "Bañera Fisher-Price",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 7,
+    name: "Sleep Sack Carter's",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 8,
+    name: "Lima eléctrica bebé",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 9,
+    name: "Platos acero inoxidable bebé",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  },
+  {
+    id: 10,
+    name: "Alimentador silicona",
+    image: "https://via.placeholder.com/300",
+    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
+  }
+];
+
+const container = document.getElementById("gifts");
+
+function render() {
+  container.innerHTML = "";
+
+  gifts.forEach(gift => {
+    const isTaken = localStorage.getItem("gift_" + gift.id);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <img src="${gift.image}">
+      <div class="content">
+        <h3>${gift.name}</h3>
+        <p class="${isTaken ? 'taken' : 'available'}">
+          ${isTaken ? "Reservado" : "Disponible"}
+        </p>
+        <button ${isTaken ? "disabled" : ""}>
+          ${isTaken ? "Ya seleccionado" : "Seleccionar"}
+        </button>
+      </div>
+    `;
+
+    card.querySelector("button").onclick = () => {
+      localStorage.setItem("gift_" + gift.id, "taken");
+      window.open(gift.link, "_blank");
+      render();
+    };
+
+    container.appendChild(card);
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
