@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Lista de Regalos Juan Martín Nieto Renjifo</title>
+  <title>Lista de Regalos Juan Martín</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -16,15 +16,12 @@
     header {
       text-align: center;
       padding: 40px;
-      background-color: #e8ded6;
-      header {
+      background-color: #e8ded6;   
   text-align: center;
   padding: 60px 20px;
   background: #e8ded6;
   position: relative;
   overflow: hidden;
-}
-
 header::before {
   content: "";
   position: absolute;
@@ -33,19 +30,19 @@ header::before {
   width: 100%;
   height: 100%;
 
-  background-image: url("https://drive.google.com/uc?export=view&id=1r1p6KcDTtPxGaVc7sxG9Qc5OTHlF69Z");
+  background-image: url("https://www.facebook.com/photo/?fbid=10164088593031259&set=a.10150787093386259&locale=es_LA");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   opacity: 0.15; /* 👈 efecto marca de agua */
-    }
-
-    .container {
+}
+        .container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
       padding: 20px;
     }
+      }
 
     .card {
       background: white;
@@ -87,7 +84,7 @@ header::before {
 
 <header>
   <h1>Lista de Regalos</h1>
-  <p>Baby Shower: Juan Martín Nieto Renjifo🤍</p>
+  <p>Baby Shower Juan Martín 🤍</p>
 </header>
 
 <div class="container" id="gifts"></div>
@@ -96,20 +93,20 @@ header::before {
 const gifts = [
   {
     id: 1,
-    name: "Fortella Gimnasio de Juego y Tapete de Actividades",
-    image: "https://m.media-amazon.com/images/I/71vgCCuFKXL._SX679_.jpg",
+    name: "Momcozy Kit de limpieza para biberones",
+    image: "https://via.placeholder.com/300",
     link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
   },
   {
     id: 2,
-    name: "Tapete de juego plegable de espuma suave",
-    image: "https://m.media-amazon.com/images/I/41lwMXIPQWL._SY300_SX300_QL70_FMwebp_.jpg",
+    name: "BAGSMART Mochila pañalera",
+    image: "https://via.placeholder.com/300",
     link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
   },
   {
     id: 3,
-    name: "Carter's Pijama Térmico con Pies y Cremallera de 2 Vías",
-    image: "https://m.media-amazon.com/images/I/814W9suuXsL._AC_SY879_.jpg",
+    name: "Esterilizador Momcozy",
+    image: "https://via.placeholder.com/300",
     link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
   },
   {
@@ -180,19 +177,10 @@ function render() {
       </div>
     `;
 
-    card.querySelector("button").onclick = async () => {
-        const confirmar = confirm("¿Has seleccionado este producto?\n\n¿Deseas reservarlo?");
-
-        if (!confirmar) return;
-
-        await updateDoc(doc(db, "gifts", docSnap.id), {
-          taken: true
-        });
-
-        alert("💛 ¡Gracias! Este regalo ha sido reservado.");
-
-        window.open(gift.link, "_blank");
-     
+    card.querySelector("button").onclick = () => {
+      localStorage.setItem("gift_" + gift.id, "taken");
+      window.open(gift.link, "_blank");
+      render();
     };
 
     container.appendChild(card);
