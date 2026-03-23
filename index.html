@@ -36,7 +36,7 @@
     img {
       width: 100%;
       height: 200px;
-      object-fit: contain; /* 👈 imagen completa */
+       object-fit: cover;
       background: #fff;
       padding: 10px;
     }
@@ -191,51 +191,41 @@ const gifts = [
     link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
   }  
 ];
+ const container = document.getElementById("giftList");
 
-const container = document.getElementById("gifts");
+  function renderGifts() {
+    container.innerHTML = "";
 
-function render() {
-  container.innerHTML = "";
+    gifts.forEach(gift => {
+      const isTaken = localStorage.getItem("gift_" + gift.id);
 
-  gifts.forEach(gift => {
-    const isTaken = localStorage.getItem("gift_" + gift.id);
+      const card = document.createElement("div");
+      card.className = "card";
 
-    const card = document.createElement("div");
-    card.className = "card";
+      card.innerHTML = `
+        <img src="${gift.image}" alt="${gift.name}">
+        <div class="card-content">
+          <h3>${gift.name}</h3>
+          <div class="status ${isTaken ? 'taken' : 'available'}">
+            ${isTaken ? "Reservado" : "Disponible"}
+          </div>
+          <button ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
+            ${isTaken ? "Ya seleccionado" : "Seleccionar"}
+          </button>
+        </div>
+      `;
 
-    card.innerHTML = `
-      <img src="${gift.image}">
-      <div class="content">
-        <h3>${gift.name}</h3>
-        <p class="${isTaken ? 'taken' : 'available'}">
-          ${isTaken ? "Reservado" : "Disponible"}
-        </p>
-        <button ${isTaken ? "disabled" : ""}>
-          ${isTaken ? "Ya seleccionado" : "Seleccionar"}
-        </button>
-      </div>
-    `;
+      container.appendChild(card);
+    });
+  }
 
-    // 🔥 SOLO EL BOTÓN HACE ALGO
-    const btn = card.querySelector("button");
+  function selectGift(id, link) {
+    localStorage.setItem("gift_" + id, "taken");
+    window.open(link, "_blank");
+    renderGifts();
+  }
 
-    btn.onclick = () => {
-      if (isTaken) return;
-
-      const confirmar = confirm("¿Deseas reservar este producto?");
-
-      if (confirmar) {
-        localStorage.setItem("gift_" + gift.id, "taken");
-        window.open(gift.link, "_blank");
-        render();
-      }
-    };
-
-    container.appendChild(card);
-  });
-}
-
-render();
+  renderGifts();
 </script>
 
 </body>
