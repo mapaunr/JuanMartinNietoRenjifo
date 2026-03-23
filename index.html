@@ -16,33 +16,15 @@
     header {
       text-align: center;
       padding: 40px;
-      background-color: #e8ded6;   
-  text-align: center;
-  padding: 60px 20px;
-  background: #e8ded6;
-  position: relative;
-  overflow: hidden;
-header::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+      background-color: #e8ded6;
+    }
 
-  background-image: url("https://www.facebook.com/photo/?fbid=10164088593031259&set=a.10150787093386259&locale=es_LA");
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.15; /* 👈 efecto marca de agua */
-}
-        .container {
+    .container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
       padding: 20px;
     }
-      }
 
     .card {
       background: white;
@@ -54,7 +36,9 @@ header::before {
     img {
       width: 100%;
       height: 200px;
-      object-fit: cover;
+      object-fit: contain; /* 👈 imagen completa */
+      background: #fff;
+      padding: 10px;
     }
 
     .content {
@@ -76,6 +60,7 @@ header::before {
 
     button:disabled {
       background: gray;
+      cursor: not-allowed;
     }
   </style>
 </head>
@@ -100,54 +85,6 @@ const gifts = [
   {
     id: 2,
     name: "BAGSMART Mochila pañalera",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 3,
-    name: "Esterilizador Momcozy",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 4,
-    name: "Muselinas Comfy Cubs",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 5,
-    name: "Silla alta de gancho",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 6,
-    name: "Bañera Fisher-Price",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 7,
-    name: "Sleep Sack Carter's",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 8,
-    name: "Lima eléctrica bebé",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 9,
-    name: "Platos acero inoxidable bebé",
-    image: "https://via.placeholder.com/300",
-    link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
-  },
-  {
-    id: 10,
-    name: "Alimentador silicona",
     image: "https://via.placeholder.com/300",
     link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
   }
@@ -177,10 +114,19 @@ function render() {
       </div>
     `;
 
-    card.querySelector("button").onclick = () => {
-      localStorage.setItem("gift_" + gift.id, "taken");
-      window.open(gift.link, "_blank");
-      render();
+    // 🔥 SOLO EL BOTÓN HACE ALGO
+    const btn = card.querySelector("button");
+
+    btn.onclick = () => {
+      if (isTaken) return;
+
+      const confirmar = confirm("¿Deseas reservar este producto?");
+
+      if (confirmar) {
+        localStorage.setItem("gift_" + gift.id, "taken");
+        window.open(gift.link, "_blank");
+        render();
+      }
     };
 
     container.appendChild(card);
