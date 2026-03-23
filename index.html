@@ -159,10 +159,19 @@ function render() {
       </div>
     `;
 
-    card.querySelector("button").onclick = () => {
-      localStorage.setItem("gift_" + gift.id, "taken");
-      window.open(gift.link, "_blank");
-      render();
+    card.querySelector("button").onclick = async () => {
+        const confirmar = confirm("¿Has seleccionado este producto?\n\n¿Deseas reservarlo?");
+
+        if (!confirmar) return;
+
+        await updateDoc(doc(db, "gifts", docSnap.id), {
+          taken: true
+        });
+
+        alert("💛 ¡Gracias! Este regalo ha sido reservado.");
+
+        window.open(gift.link, "_blank");
+     
     };
 
     container.appendChild(card);
