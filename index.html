@@ -97,6 +97,8 @@
   <p>Baby Shower: Juan Martín Nieto Renjifo 🤍</p>
 </header>
 
+<div id="summary" style="text-align:center; margin:20px; font-size:18px;"></div>
+
 <div class="container" id="gifts"></div>
 
 <script type="module">
@@ -361,35 +363,50 @@ from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
     renderGifts(data);
   });
 
-  function renderGifts(data = {}) {
-    container.innerHTML = "";
+ function renderGifts(data = {}) {
+  container.innerHTML = "";
 
-    gifts.forEach(gift => {
-      const isTaken = data[gift.id]?.taken ?? gift.taken;
+  let reservados = 0;
+  let disponibles = 0;
 
-      const card = document.createElement("div");
-      card.className = "card";
+  gifts.forEach(gift => {
+    const isTaken = data[gift.id]?.taken === true;
 
-      card.innerHTML = `
-        <img src="${gift.image}" 
-             onerror="this.src='https://placehold.co/300x200?text=Regalo'">
-        <div class="card-content">
-          <h3>${gift.name}</h3>
-          <div class="status ${isTaken ? 'taken' : 'available'}">
-            ${isTaken ? "Reservado" : "Disponible"}
-          </div>
+    if (isTaken) {
+      reservados++;
+    } else {
+      disponibles++;
+    }
 
-          <button ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
-            ${isTaken ? "Ya seleccionado ✅" : "Seleccionar"}
-          </button>
+    const card = document.createElement("div");
+    card.className = "card";
 
-          ${isTaken ? `<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>` : ""}
+    card.innerHTML = `
+      <img src="${gift.image}" 
+           onerror="this.src='https://placehold.co/300x200?text=Regalo'">
+      <div class="card-content">
+        <h3>${gift.name}</h3>
+        <div class="status ${isTaken ? 'taken' : 'available'}">
+          ${isTaken ? "Reservado" : "Disponible"}
         </div>
-      `;
 
-      container.appendChild(card);
-    });
-  }
+        <button class="${isTaken ? 'selected' : ''}" ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
+          ${isTaken ? "Ya seleccionado ✅" : "Seleccionar"}
+        </button>
+
+        ${isTaken ? `<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>` : ""}
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+
+  // 🔥 RESUMEN EN PANTALLA
+  document.getElementById("summary").innerHTML = `
+    🎁 Reservados: <b>${reservados}</b> | 
+    🟢 Disponibles: <b>${disponibles}</b>
+  `;
+}
 
   // 🔥 RESERVAR
  window.selectGift = async function(id, link) {
