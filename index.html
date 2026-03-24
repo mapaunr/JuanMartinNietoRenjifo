@@ -19,6 +19,11 @@
       background-color: #e8ded6;
     }
 
+    .filter-container {
+      text-align: center;
+      margin: 20px;
+    }
+
     .container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -62,7 +67,7 @@
     }
 
     .available { color: #7a9e7e; font-weight: bold; }
-    .taken { color: #7a9e7e; font-weight: bold; }
+    .taken { color: #c2185b; font-weight: bold; }
 
     button {
       width: 100%;
@@ -99,20 +104,6 @@
       font-size: 18px;
       font-weight: bold;
     }
-
-    .input-popup {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      margin-bottom: 10px;
-    }
-    .input-popup input {
-      padding: 8px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    #filter-container { text-align:center; margin:20px; }
-#filter { padding:5px 10px; }
   </style>
 </head>
 
@@ -120,24 +111,23 @@
 
 <header>
   <h1>Lista de Regalos</h1>
-  <p>Baby Shower:🤎Juan Martín Nieto Renjifo🤎</p>
+  <p>Baby Shower: 🤎Juan Martín Nieto Renjifo🤎</p>
   <p>Si deseas, puedes enviar los regalos a casa de María Paula Nieto: <br>
      Calle 120 # 19a - 14 Edificio Alcaparros de Santa Barbara apto 303 - Bogotá, Colombia <br>
      Cel: 3145658708
   </p>
 </header>
-  
-<div id="filter-container">
+
+<div class="filter-container">
   <label for="filter">Mostrar: </label>
-  <select id="filter">
+  <select id="filter" onchange="renderGifts()">
     <option value="all">Todos</option>
     <option value="available">Disponibles</option>
     <option value="reserved">Reservados</option>
   </select>
 </div>
-  
-  <div id="summary">Cargando resumen...</div>
 
+<div id="summary">Cargando resumen...</div>
 <div class="container" id="gifts"></div>
 
 <script type="module">
@@ -145,6 +135,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/fireba
 import { getFirestore, collection, doc, setDoc, onSnapshot, runTransaction } 
 from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
+// Configuración Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyA3i0Xm08OLJBxyDLFfLnf3kWyFsUtSpuU",
   authDomain: "baby-shower-juan-martin-7f0f0.firebaseapp.com",
@@ -153,6 +144,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// Variables globales
+const container = document.getElementById("gifts");
+const summary = document.getElementById("summary");
+const filterSelect = document.getElementById("filter");
+let allGiftsData = {};
 
 // Lista de regalos
   const gifts = [
@@ -392,32 +389,25 @@ const db = getFirestore(app);
   }
 ];
  
-const container = document.getElementById("gifts");
-const summary = document.getElementById("summary");
-const filterSelect = document.getElementById("filter");
-
-let allGiftsData = {};
-
-// 🔥 TIEMPO REAL
+// 🔥 TIEMPO REAL: escucha cambios en Firestore
 onSnapshot(collection(db, "gifts"), (snapshot) => {
-  const data = {};
-  snapshot.forEach(doc => data[doc.id] = doc.data());
-  renderGifts(data);
-  renderSummary(data);
+  allGiftsData = {};
+  snapshot.forEach(doc => allGiftsData[doc.id] = doc.data());
+  renderGifts();
+  renderSummary();
 });
 
-filterSelect.addEventListener("change", renderGifts);
-
+// Renderiza los regalos según filtro
 function renderGifts() {
   const filter = filterSelect.value;
   container.innerHTML = "";
 
   gifts.forEach(gift => {
     const data = allGiftsData[gift.id] || {};
-    const isTaken = data.taken || gift.taken || false;
+    const isTaken = data.taken || false;
 
-    if (filter === "available" && isTaken) return;
-    if (filter === "reserved" && !isTaken) return;
+    if(filter==="available" && isTaken) return;
+    if(filter==="reserved" && !isTaken) return;
 
     const card = document.createElement("div");
     card.className = "card";
@@ -438,38 +428,43 @@ function renderGifts() {
   });
 }
 
+// Renderiza resumen
 function renderSummary() {
   const total = gifts.length;
-  const taken = gifts.filter(g => (allGiftsData[g.id]?.taken || g.taken)).length;
+  const taken = gifts.filter(g => allGiftsData[g.id]?.taken).length;
   const available = total - taken;
   summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
 }
 
-// 🔥 RESERVAR con nombre y teléfono
+// Reservar regalo
 window.reserveGift = async function(id, link) {
-  const name = prompt("La siguiente información no será revelada. Ingresa tu nombre:");
-  if (!name) return alert("Debes ingresar tu nombre");
+  alert("Tu información será guardada solo con fines informativos y no será revelada.");
+
+  const name = prompt("Ingresa tu nombre:");
+  if(!name) return alert("Debes ingresar tu nombre");
 
   const phone = prompt("Ingresa tu número de celular:");
-  if (!phone) return alert("Debes ingresar tu número de celular");
+  if(!phone) return alert("Debes ingresar tu número de celular");
 
   const confirmar = confirm("¿Deseas reservar este regalo?");
-  if (!confirmar) return;
+  if(!confirmar) return;
 
-  alert("¡Gracias! Tu información se guardó solo con fines informativos y no será revelado.");
   const ref = doc(db, "gifts", String(id));
-
   try {
     await runTransaction(db, async (transaction) => {
       const docSnap = await transaction.get(ref);
-      if (docSnap.exists() && docSnap.data().taken === true) {
+      if(docSnap.exists() && docSnap.data().taken) {
         throw "Este regalo ya fue reservado por otra persona 😢";
       }
-      transaction.set(ref, { taken: true, name, phone }, { merge: true });
+      transaction.set(ref, {taken:true, name, phone}, {merge:true});
     });
 
-    if (link && link !== "sin link") {
-      window.location.href = link;
+    if(link && link!=="sin link") {
+      if(/Mobi|Android/i.test(navigator.userAgent)) {
+        window.location.href = link;
+      } else {
+        window.open(link, "_blank");
+      }
     }
 
   } catch (error) {
@@ -477,17 +472,14 @@ window.reserveGift = async function(id, link) {
   }
 };
 
-// 🔥 LIBERAR
+// Liberar regalo
 window.releaseGift = async function(id) {
   const confirmar = confirm("¿Deseas liberar este regalo?");
-  if (!confirmar) return;
+  if(!confirmar) return;
 
-  await setDoc(doc(db, "gifts", String(id)), {
-    taken: false,
-    name: "",
-    phone: ""
-  }, { merge: true });
+  await setDoc(doc(db, "gifts", String(id)), {taken:false, name:"", phone:""}, {merge:true});
 };
 </script>
+
 </body>
 </html>
