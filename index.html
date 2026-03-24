@@ -351,65 +351,57 @@ from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
     link: "https://www.pepeganga.com/esterilizador-secador-de-accesorios-y-teteros-2en1-gris-dr-brown-s-149000/p?skuId=287049&source_impresee=sycjrnr9ahuhg5jqjqzzruqzzm"
   }
 ];
- 
-  const container = document.getElementById("gifts");
+ const container = document.getElementById("gifts");
+const summary = document.getElementById("summary");
 
-  // 🔥 TIEMPO REAL
-  onSnapshot(collection(db, "gifts"), (snapshot) => {
-    const data = {};
-    snapshot.forEach(doc => {
-      data[doc.id] = doc.data();
-    });
-    renderGifts(data);
-  });
+// 🔥 TIEMPO REAL
+onSnapshot(collection(db, "gifts"), (snapshot) => {
+  const data = {};
+  snapshot.forEach(doc => data[doc.id] = doc.data());
+  renderGifts(data);
+  renderSummary(data);
+});
 
- function renderGifts(data = {}) {
+// renderiza los regalos
+function renderGifts(data = {}) {
   container.innerHTML = "";
 
-  let reservados = 0;
-  let disponibles = 0;
-
   gifts.forEach(gift => {
-    const isTaken = data[gift.id]?.taken === true;
-
-    if (isTaken) {
-      reservados++;
-    } else {
-      disponibles++;
-    }
+    const isTaken = data[gift.id]?.taken ?? gift.taken;
 
     const card = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
-      <img src="${gift.image}" 
-           onerror="this.src='https://placehold.co/300x200?text=Regalo'">
+      <img src="${gift.image}" onerror="this.src='https://placehold.co/300x200?text=Regalo'">
       <div class="card-content">
         <h3>${gift.name}</h3>
         <div class="status ${isTaken ? 'taken' : 'available'}">
           ${isTaken ? "Reservado" : "Disponible"}
         </div>
 
-        <button class="${isTaken ? 'selected' : ''}" ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
+        <button ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
           ${isTaken ? "Ya seleccionado ✅" : "Seleccionar"}
         </button>
 
         ${isTaken ? `<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>` : ""}
       </div>
     `;
-
     container.appendChild(card);
   });
-
-  // 🔥 RESUMEN EN PANTALLA
-  document.getElementById("summary").innerHTML = `
-    🎁 Reservados: <b>${reservados}</b> | 
-    🟢 Disponibles: <b>${disponibles}</b>
-  `;
 }
 
-  // 🔥 RESERVAR
- window.selectGift = async function(id, link) {
+// renderiza conteo total
+function renderSummary(data = {}) {
+  const total = gifts.length;
+  const taken = gifts.filter(g => data[g.id]?.taken).length;
+  const available = total - taken;
+
+  summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
+}
+
+// 🔥 RESERVAR
+window.selectGift = async function(id, link) {
   const confirmar = confirm("¿Deseas reservar este regalo?");
   if (!confirmar) return;
 
@@ -418,17 +410,19 @@ from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
   try {
     await runTransaction(db, async (transaction) => {
       const docSnap = await transaction.get(ref);
-
       if (docSnap.exists() && docSnap.data().taken === true) {
         throw "Este regalo ya fue reservado por otra persona 😢";
       }
-
       transaction.set(ref, { taken: true }, { merge: true });
     });
 
-    // solo abre el link si sí lo logró reservar
+    // abre link compatible con móviles
     if (link && link !== "sin link") {
-      window.open(link, "_blank");
+      if (/Mobi|Android/i.test(navigator.userAgent)) {
+        window.location.href = link;
+      } else {
+        window.open(link, "_blank");
+      }
     }
 
   } catch (error) {
@@ -436,8 +430,8 @@ from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
   }
 };
 
-  // 🔥 LIBERAR (NUEVO)
- window.releaseGift = async function(id) {
+// 🔥 LIBERAR
+window.releaseGift = async function(id) {
   const confirmar = confirm("¿Deseas liberar este regalo?");
   if (!confirmar) return;
 
@@ -448,6 +442,6 @@ from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
   }, { merge: true });
 };
 </script>
-
 </body>
 </html>
+  
