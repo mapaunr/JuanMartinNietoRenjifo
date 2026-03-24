@@ -580,7 +580,7 @@ const snap=await t.get(ref);
 if(snap.exists() && snap.data().taken)
 throw "¡Te han ganado!\n\nEste regalo ya fue reservado por alguien más.\n\nIntenta de nuevo o selecciona otro";
 
-t.set(ref,{taken:true,name_comprador,phone},{merge:true});
+t.set(ref,{name,taken:true,name_comprador,phone},{merge:true});
 
 });
 
