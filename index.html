@@ -438,9 +438,7 @@ function renderSummary() {
 
 // Reservar regalo
 window.reserveGift = async function(id, link) {
-  alert("Tu información será guardada solo con fines informativos y no será revelada.");
-
-  const name = prompt("Ingresa tu nombre:");
+  const name = prompt("La siguiente información solo es informativa; no será revelada.\nSi no deseas seleccionar este item, tu información será eliminada automáticamente.\nIngresa tu nombre:");
   if(!name) return alert("Debes ingresar tu nombre");
 
   const phone = prompt("Ingresa tu número de celular:");
@@ -459,15 +457,10 @@ window.reserveGift = async function(id, link) {
       transaction.set(ref, {taken:true, name, phone}, {merge:true});
     });
 
-    if(link && link!=="sin link") {
-      if(/Mobi|Android/i.test(navigator.userAgent)) {
-        window.location.href = link;
-      } else {
-        window.open(link, "_blank");
+     if (link && link !== "sin link") {
+      window.open(link, "_blank");
       }
-    }
-
-  } catch (error) {
+    } catch (error) {
     alert(error);
   }
 };
