@@ -412,7 +412,7 @@ filterSelect.addEventListener("change", e => {
 window.handleReserve = async function(id) {
   if (!confirm("¿Deseas reservar este regalo?")) return;
 
-  const name = prompt("Tu nombre:");
+  const name = prompt("Tu nombre (este solo quedará guardado si mantienes la selección):");
   if (!name) return;
 
   const phone = prompt("Tu celular:");
