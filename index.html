@@ -66,6 +66,12 @@ color:#c2185b;
 font-weight:bold;
 }
 
+ .buyer{
+font-size:10px;
+margin-top:4px;
+color:#777;
+}
+
 button{
 width:100%;
 padding:10px;
@@ -168,7 +174,8 @@ collection,
 doc,
 setDoc,
 onSnapshot,
-runTransaction
+runTransaction, 
+deleteField
 } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 
@@ -186,7 +193,8 @@ const container=document.getElementById("gifts");
 const summary=document.getElementById("summary");
 const progress=document.getElementById("progress");
 const filterSelect=document.getElementById("filter");
-
+const params = new URLSearchParams(window.location.search);
+const isAdmin = params.get("admin") === "mp";
 
 let allGiftsData={};
 let currentFilter="all";
@@ -430,7 +438,6 @@ function renderGifts(){
 container.innerHTML="";
 
 const filtered=gifts.filter(g=>{
-
 const taken=allGiftsData[g.id]?.taken ?? g.taken ?? false;
 
 if(currentFilter==="available") return !taken;
@@ -444,7 +451,7 @@ return true;
 filtered.forEach(gift=>{
 
 const taken=allGiftsData[gift.id]?.taken ?? gift.taken ?? false;
-
+const buyerName = allGiftsData[gift.id]?.name_comprador ?? "";
 const div=document.createElement("div");
 
 div.className="card";
@@ -464,7 +471,11 @@ div.innerHTML=`
 <div class="${taken?'taken':'available'}">
 ${taken?'Reservado':'Disponible'}
 </div>
-
+${isAdmin && buyerName ? `
+<div class="buyer">
+Reservado por: ${buyerName}
+</div>
+` : ""}
 ${
 taken
 ? `
@@ -550,9 +561,9 @@ renderGifts();
 
 window.reserveGift=async function(id){
 
-const name=prompt("La siguiente información no será revelada.\n\nSolo será por si se presenta algún error.\n\nIngresa tu nombre");
+const name_comprador=prompt("La siguiente información no será revelada.\n\nSolo será por si se presenta algún error.\n\nIngresa tu nombre");
 
-if(!name) return;
+if(!name_comprador) return;
 
 const phone=prompt("Tu celular");
 
@@ -569,7 +580,7 @@ const snap=await t.get(ref);
 if(snap.exists() && snap.data().taken)
 throw "¡Te han ganado!\n\nEste regalo ya fue reservado por alguien más.\n\nIntenta de nuevo o selecciona otro";
 
-t.set(ref,{taken:true,name,phone},{merge:true});
+t.set(ref,{taken:true,name_comprador,phone},{merge:true});
 
 });
 
@@ -585,12 +596,19 @@ alert(e);
 
 
 /* LIBERAR */
-
-window.releaseGift=async function(id){
+window.releaseGift = async function(id){
 
 if(!confirm("¿Liberar regalo?")) return;
 
-await setDoc(doc(db,"gifts",String(id)),{taken:false},{merge:true});
+await setDoc(
+doc(db,"gifts",String(id)),
+{
+taken:false,
+name_comprador:deleteField(),
+phone:deleteField()
+},
+{merge:true}
+);
 
 };
 
