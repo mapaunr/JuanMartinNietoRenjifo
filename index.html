@@ -550,7 +550,7 @@ renderGifts();
 
 window.reserveGift=async function(id){
 
-const name=prompt("Tu nombre");
+const name=prompt("La sigueinte información no será revelada./nSolo será por si se presenta algún error/nTu nombre");
 
 if(!name) return;
 
@@ -573,7 +573,7 @@ t.set(ref,{taken:true,name,phone},{merge:true});
 
 });
 
-alert("¡Gracias por reservar este regalo!");
+alert("Tu regalo ha sido reservado y no podrá ser seleccionado por nadie más a menos que lo liberes");
 
 }catch(e){
 
