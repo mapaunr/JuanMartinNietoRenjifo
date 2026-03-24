@@ -92,7 +92,6 @@ button:disabled { background: gray; cursor: not-allowed; }
 </div>
 
 <div class="container" id="gifts"></div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, onSnapshot, runTransaction } 
@@ -112,6 +111,7 @@ const summary = document.getElementById("summary");
 const filterSelect = document.getElementById("filter");
 
 let allGiftsData = {};
+let currentFilter = "all";
 
  // Lista de regalos
   const gifts = [
@@ -347,83 +347,128 @@ let allGiftsData = {};
 ];
 ];
 
-function renderGifts(dataToRender = {}) {
+/* 🔹 RENDER */
+function renderGifts() {
   container.innerHTML = "";
-  gifts.forEach(gift => {
-    const isTaken = dataToRender[gift.id]?.taken ?? gift.taken;
+
+  const filtered = gifts.filter(g => {
+    const isTaken = allGiftsData[g.id]?.taken ?? g.taken;
+
+    if (currentFilter === "available") return !isTaken;
+    if (currentFilter === "reserved") return isTaken;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = "<p style='text-align:center'>No hay regalos en este filtro</p>";
+    return;
+  }
+
+  filtered.forEach(gift => {
+    const isTaken = allGiftsData[gift.id]?.taken ?? gift.taken;
+
     const card = document.createElement("div");
     card.className = "card";
+
     card.innerHTML = `
       <img src="${gift.image}" onerror="this.src='https://placehold.co/300x200?text=Regalo'">
       <div class="card-content">
         <h3>${gift.name}</h3>
-        <div class="status ${isTaken?'taken':'available'}">${isTaken?'Reservado':'Disponible'}</div>
-        <button ${isTaken?'disabled':''} onclick="reserveGift(${gift.id})">
-          ${isTaken?'Ya seleccionado ✅':'Seleccionar'}
-        </button>
-        ${isTaken?`<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>
-        <button onclick="window.open('${gift.link}','_blank')">Ir al regalo</button>`:""}
+        <div class="status ${isTaken ? 'taken' : 'available'}">
+          ${isTaken ? 'Reservado' : 'Disponible'}
+        </div>
+
+        ${
+          isTaken
+          ? `<button disabled>Ya seleccionado ✅</button>
+             <button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>`
+          : `<button onclick="handleReserve(${gift.id})">Seleccionar</button>`
+        }
       </div>
     `;
+
     container.appendChild(card);
   });
 }
 
-function renderSummary(data = {}) {
+/* 🔹 RESUMEN */
+function renderSummary() {
   const total = gifts.length;
-  const taken = gifts.filter(g=>data[g.id]?.taken).length;
+  const taken = gifts.filter(g => allGiftsData[g.id]?.taken).length;
   const available = total - taken;
+
   summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
 }
 
-onSnapshot(collection(db,"gifts"),snapshot=>{
+/* 🔹 FIREBASE LISTENER */
+onSnapshot(collection(db, "gifts"), snapshot => {
   allGiftsData = {};
-  snapshot.forEach(doc=>allGiftsData[doc.id]=doc.data());
-  renderGifts(allGiftsData);
-  renderSummary(allGiftsData);
-});
-
-filterSelect.addEventListener("change",()=>{
-  const filter = filterSelect.value;
-  const filteredData = {};
-  gifts.forEach(g=>{
-    const isTaken = allGiftsData[g.id]?.taken??g.taken;
-    if(filter==='available'&&isTaken) return;
-    if(filter==='reserved'&&!isTaken) return;
-    filteredData[g.id]=allGiftsData[g.id];
+  snapshot.forEach(doc => {
+    allGiftsData[doc.id] = doc.data();
   });
-  renderGifts(filteredData);
+
+  renderGifts();
+  renderSummary();
 });
 
-// Reservar regalo
-window.reserveGift = async function(id) {
-  alert("Tu información no será revelada y solo se usa con fines informativos.");
-  const name = prompt("Ingresa tu nombre (2 renglones si deseas usar enter):");
-  if(!name) return alert("Debes ingresar tu nombre");
-  const phone = prompt("Ingresa tu número de celular:");
-  if(!phone) return alert("Debes ingresar tu número de celular");
+/* 🔹 FILTRO */
+filterSelect.addEventListener("change", () => {
+  currentFilter = filterSelect.value;
+  renderGifts();
+});
+
+/* 🔹 RESERVAR + ABRIR LINK */
+window.handleReserve = async function(id) {
+
   const confirmar = confirm("¿Deseas reservar este regalo?");
-  if(!confirmar) return;
-  const ref = doc(db,"gifts",String(id));
-  try{
-    await runTransaction(db,async transaction=>{
+  if (!confirmar) return;
+
+  const name = prompt("Ingresa tu nombre:");
+  if (!name) return alert("Debes ingresar tu nombre");
+
+  const phone = prompt("Ingresa tu celular:");
+  if (!phone) return alert("Debes ingresar tu celular");
+
+  const ref = doc(db, "gifts", String(id));
+
+  try {
+    await runTransaction(db, async (transaction) => {
       const docSnap = await transaction.get(ref);
-      if(docSnap.exists()&&docSnap.data().taken) throw "Este regalo ya fue reservado por otra persona 😢";
-      transaction.set(ref,{taken:true,name,phone},{merge:true});
+
+      if (docSnap.exists() && docSnap.data().taken) {
+        throw "Este regalo ya fue reservado 😢";
+      }
+
+      transaction.set(ref, {
+        taken: true,
+        name,
+        phone
+      }, { merge: true });
     });
-    alert("¡Gracias! Tu reserva se guardó.");
-    // Actualiza la UI
-    renderGifts(allGiftsData);
-  }catch(e){
+
+    alert("¡Reserva guardada!");
+
+    // 🔥 ABRE EL LINK EN LA MISMA PESTAÑA
+    const gift = gifts.find(g => g.id === id);
+    if (gift.link && gift.link !== "sin link") {
+      window.location.href = gift.link;
+    }
+
+  } catch (e) {
     alert(e);
   }
 };
 
-// Liberar regalo
-window.releaseGift = async function(id){
-  const confirmar = confirm("¿Deseas liberar este regalo?");
-  if(!confirmar) return;
-  await setDoc(doc(db,"gifts",String(id)),{taken:false,name:"",phone:""},{merge:true});
+/* 🔹 LIBERAR */
+window.releaseGift = async function(id) {
+  const confirmar = confirm("¿Liberar este regalo?");
+  if (!confirmar) return;
+
+  await setDoc(doc(db, "gifts", String(id)), {
+    taken: false,
+    name: "",
+    phone: ""
+  }, { merge: true });
 };
 
 </script>
