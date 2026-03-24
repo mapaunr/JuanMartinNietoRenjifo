@@ -15,7 +15,7 @@
 
     header {
       text-align: center;
-      padding: 40px;
+      padding: 20px;
       background-color: #e8ded6;
     }
 
@@ -61,7 +61,7 @@
       margin-bottom: 12px;
     }
 
-    .available { color: #7a9e7e; }
+    .available { color: #7a9e7e; font-weight: bold; }
     .taken { color: #7a9e7e; font-weight: bold; }
 
     button {
@@ -84,8 +84,32 @@
       cursor: not-allowed;
     }
 
-    .undo:hover {
+    .undo {
       background: #c2185b;
+      margin-top: 5px;
+    }
+
+    .undo:hover {
+      background: #a31648;
+    }
+
+    #summary {
+      text-align: center;
+      margin: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .input-popup {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .input-popup input {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
@@ -95,26 +119,30 @@
 <header>
   <h1>Lista de Regalos</h1>
   <p>Baby Shower: Juan Martín Nieto Renjifo 🤍</p>
+  <p>Si deseas, puedes enviar los regalos a: <br>
+     Calle 120 # 19a - 14 Edificio Alcaparros de Santa Barbara apto 303 - Bogotá, Colombia <br>
+     Cel: 3145658708
+  </p>
 </header>
 
-<div id="summary" style="text-align:center; margin:20px; font-size:18px;"></div>
-
+<div id="summary">Cargando resumen...</div>
 <div class="container" id="gifts"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, runTransaction } 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot, runTransaction } 
 from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyA3i0Xm08OLJBxyDLFfLnf3kWyFsUtSpuU",
-    authDomain: "baby-shower-juan-martin-7f0f0.firebaseapp.com",
-    projectId: "baby-shower-juan-martin-7f0f0"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyA3i0Xm08OLJBxyDLFfLnf3kWyFsUtSpuU",
+  authDomain: "baby-shower-juan-martin-7f0f0.firebaseapp.com",
+  projectId: "baby-shower-juan-martin-7f0f0"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
+// Lista de regalos
   const gifts = [
     {
     id: 1,
@@ -351,7 +379,8 @@ from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
     link: "https://www.pepeganga.com/esterilizador-secador-de-accesorios-y-teteros-2en1-gris-dr-brown-s-149000/p?skuId=287049&source_impresee=sycjrnr9ahuhg5jqjqzzruqzzm"
   }
 ];
- const container = document.getElementById("gifts");
+ 
+const container = document.getElementById("gifts");
 const summary = document.getElementById("summary");
 
 // 🔥 TIEMPO REAL
@@ -362,7 +391,7 @@ onSnapshot(collection(db, "gifts"), (snapshot) => {
   renderSummary(data);
 });
 
-// renderiza los regalos
+// renderiza regalos
 function renderGifts(data = {}) {
   container.innerHTML = "";
 
@@ -380,7 +409,7 @@ function renderGifts(data = {}) {
           ${isTaken ? "Reservado" : "Disponible"}
         </div>
 
-        <button ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
+        <button ${isTaken ? "disabled" : ""} onclick="reserveGift(${gift.id}, '${gift.link}')">
           ${isTaken ? "Ya seleccionado ✅" : "Seleccionar"}
         </button>
 
@@ -391,7 +420,7 @@ function renderGifts(data = {}) {
   });
 }
 
-// renderiza conteo total
+// renderiza conteo
 function renderSummary(data = {}) {
   const total = gifts.length;
   const taken = gifts.filter(g => data[g.id]?.taken).length;
@@ -400,11 +429,17 @@ function renderSummary(data = {}) {
   summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
 }
 
-// 🔥 RESERVAR
-window.selectGift = async function(id, link) {
+// 🔥 RESERVAR con nombre y teléfono
+window.reserveGift = async function(id, link) {
+  const name = prompt("Ingresa tu nombre:");
+  if (!name) return alert("Debes ingresar tu nombre");
+
+  const phone = prompt("Ingresa tu número de celular:");
+  if (!phone) return alert("Debes ingresar tu número de celular");
+
   const confirmar = confirm("¿Deseas reservar este regalo?");
   if (!confirmar) return;
-
+alert("¡Gracias! Tu información se guardó solo con fines informativos.");
   const ref = doc(db, "gifts", String(id));
 
   try {
@@ -413,10 +448,11 @@ window.selectGift = async function(id, link) {
       if (docSnap.exists() && docSnap.data().taken === true) {
         throw "Este regalo ya fue reservado por otra persona 😢";
       }
-      transaction.set(ref, { taken: true }, { merge: true });
+
+      transaction.set(ref, { taken: true, name, phone }, { merge: true });
     });
 
-    // abre link compatible con móviles
+    // abrir link compatible móvil
     if (link && link !== "sin link") {
       if (/Mobi|Android/i.test(navigator.userAgent)) {
         window.location.href = link;
@@ -444,4 +480,3 @@ window.releaseGift = async function(id) {
 </script>
 </body>
 </html>
-  
