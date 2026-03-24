@@ -124,8 +124,18 @@
      Cel: 3145658708
   </p>
 </header>
-
-<div id="summary">Cargando resumen...</div>
+<!-- FILTRO -->
+  <div style="text-align:center; margin:20px;">
+  <label for="filter">Mostrar: </label>
+  <select id="filter" onchange="applyFilter()">
+    <option value="all">Todos</option>
+    <option value="available">Disponibles</option>
+    <option value="reserved">Reservados</option>
+  </select>
+</div>
+<!-- RESUMEN -->
+  <div id="summary">Cargando resumen...</div>
+  <!-- CONTENEDOR DE REGALOS -->
 <div class="container" id="gifts"></div>
 
 <script type="module">
@@ -428,7 +438,22 @@ function renderSummary(data = {}) {
 
   summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
 }
+// FILTRO
+function applyFilter() {
+  const filter = document.getElementById("filter").value;
+  const filteredData = {};
 
+  gifts.forEach(gift => {
+    const isTaken = allGiftsData[gift.id]?.taken ?? gift.taken;
+
+    if (filter === "available" && isTaken) return;
+    if (filter === "reserved" && !isTaken) return;
+
+    filteredData[gift.id] = allGiftsData[gift.id] || gift;
+  });
+
+  renderGifts(filteredData);
+}
 // 🔥 RESERVAR con nombre y teléfono
 window.reserveGift = async function(id, link) {
   const name = prompt("La siguiente información no será revelada. Ingresa tu nombre:");
