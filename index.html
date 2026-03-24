@@ -475,12 +475,12 @@ Liberar
 `
 :`
 <button onclick="reserveGift(${gift.id})">
-Reservar
+Reservar/¡Lo he comprado!
 </button>
 
 <a href="${gift.link}" target="_blank">
 <button>
-Ver precio / detalle
+Ver detalle / Ir a link para pagar
 </button>
 </a>
 `
@@ -550,7 +550,7 @@ renderGifts();
 
 window.reserveGift=async function(id){
 
-const name=prompt("La siguiente información no será revelada. Solo será por si se presenta algún error. Ingresa tu nombre");
+const name=prompt("La siguiente información no será revelada.\n\nSolo será por si se presenta algún error.\n\nIngresa tu nombre");
 
 if(!name) return;
 
@@ -567,13 +567,13 @@ await runTransaction(db,async t=>{
 const snap=await t.get(ref);
 
 if(snap.exists() && snap.data().taken)
-throw "¡Te han ganado! Este regalo ya fue reservado por alguien más. Intenta de nuevo o selecciona otro";
+throw "¡Te han ganado!\n\nEste regalo ya fue reservado por alguien más.\n\nIntenta de nuevo o selecciona otro";
 
 t.set(ref,{taken:true,name,phone},{merge:true});
 
 });
 
-alert("Tu regalo ha sido reservado y no podrá ser seleccionado por nadie más a menos que lo liberes");
+alert("Tu regalo ha sido reservado y no podrá ser seleccionado por nadie más; a menos que, lo liberes");
 
 }catch(e){
 
