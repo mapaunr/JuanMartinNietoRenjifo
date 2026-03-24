@@ -101,9 +101,24 @@
 </header>
 
 <div class="container" id="gifts"></div>
-<script>
-const gifts = [
-  {
+
+<!-- 🔥 FIREBASE + TU LÓGICA -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, onSnapshot } 
+  from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA3i0Xm08OLJBxyDLFfLnf3kWyFsUtSpuU",
+    authDomain: "baby-shower-juan-martin-7f0f0.firebaseapp.com",
+    projectId: "baby-shower-juan-martin-7f0f0"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const gifts = [
+    {
     id: 1,
     name: "Gimnasio y Tapete",
     image: "https://m.media-amazon.com/images/I/41zdOKeh54L._SY300_SX300_QL70_FMwebp_.jpg",
@@ -158,47 +173,57 @@ const gifts = [
     link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
   }
 ];
- const container = document.getElementById("gifts");
+ 
+  const container = document.getElementById("gifts");
 
-function renderGifts() {
-  container.innerHTML = "";
+  // 🔥 TIEMPO REAL
+  onSnapshot(collection(db, "gifts"), (snapshot) => {
+    const data = {};
 
-  gifts.forEach(gift => {
-    const isTaken = localStorage.getItem("gift_" + gift.id);
+    snapshot.forEach(doc => {
+      data[doc.id] = doc.data();
+    });
 
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <img src="${gift.image}" alt="${gift.name}">
-      <div class="card-content">
-        <h3>${gift.name}</h3>
-        <div class="status ${isTaken ? 'taken' : 'available'}">
-          ${isTaken ? "Reservado" : "Disponible"}
-        </div>
-        <button ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
-          ${isTaken ? "Ya seleccionado" : "Seleccionar"}
-        </button>
-      </div>
-    `;
-
-    container.appendChild(card);
+    renderGifts(data);
   });
-}
 
-function selectGift(id, link) {
-    // Confirmación antes de reservar
-  const confirmar = confirm("¿Deseas reservar este regalo?");
+  function renderGifts(data = {}) {
+    container.innerHTML = "";
 
-  if (!confirmar) return;
-// Abrir el link primero
-  window.open(link, "_blank");
-  localStorage.setItem("gift_" + id, "taken");
+    gifts.forEach(gift => {
+      const isTaken = data[gift.id]?.taken;
 
-  renderGifts();
-}
+      const card = document.createElement("div");
+      card.className = "card";
 
-renderGifts();
+      card.innerHTML = `
+        <img src="${gift.image}" alt="${gift.name}">
+        <div class="card-content">
+          <h3>${gift.name}</h3>
+          <div class="status ${isTaken ? 'taken' : 'available'}">
+            ${isTaken ? "Reservado" : "Disponible"}
+          </div>
+          <button ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
+            ${isTaken ? "Ya seleccionado" : "Seleccionar"}
+          </button>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  // 🔥 RESERVAR
+  window.selectGift = async function(id, link) {
+    const confirmar = confirm("¿Deseas reservar este regalo?");
+    if (!confirmar) return;
+
+    await setDoc(doc(db, "gifts", String(id)), {
+      taken: true
+    });
+
+    window.open(link, "_blank");
+  };
 </script>
 
 </body>
