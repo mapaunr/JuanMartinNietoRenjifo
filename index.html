@@ -61,14 +61,8 @@
       margin-bottom: 12px;
     }
 
-    .available { 
-      color: #7a9e7e; 
-    }
-
-    .taken { 
-      color: #b85c5c; 
-      font-weight: bold;
-    }
+    .available { color: #7a9e7e; }
+    .taken { color: #b85c5c; font-weight: bold; }
 
     button {
       width: 100%;
@@ -80,15 +74,18 @@
       cursor: pointer;
       font-weight: bold;
       transition: 0.2s;
+      margin-bottom: 5px;
     }
 
-    button:hover {
-      background: #b48d67;
-    }
+    button:hover { background: #b48d67; }
 
     button:disabled {
       background: gray;
       cursor: not-allowed;
+    }
+
+    .undo {
+      background: #888;
     }
   </style>
 </head>
@@ -102,7 +99,6 @@
 
 <div class="container" id="gifts"></div>
 
-<!-- 🔥 FIREBASE + TU LÓGICA -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, onSnapshot } 
@@ -359,11 +355,9 @@
   // 🔥 TIEMPO REAL
   onSnapshot(collection(db, "gifts"), (snapshot) => {
     const data = {};
-
     snapshot.forEach(doc => {
       data[doc.id] = doc.data();
     });
-
     renderGifts(data);
   });
 
@@ -371,21 +365,25 @@
     container.innerHTML = "";
 
     gifts.forEach(gift => {
-      const isTaken = data[gift.id]?.taken;
+      const isTaken = data[gift.id]?.taken || gift.taken;
 
       const card = document.createElement("div");
       card.className = "card";
 
       card.innerHTML = `
-        <img src="${gift.image}" alt="${gift.name}">
+        <img src="${gift.image}" 
+             onerror="this.src='https://placehold.co/300x200?text=Regalo'">
         <div class="card-content">
           <h3>${gift.name}</h3>
           <div class="status ${isTaken ? 'taken' : 'available'}">
             ${isTaken ? "Reservado" : "Disponible"}
           </div>
+
           <button ${isTaken ? "disabled" : ""} onclick="selectGift(${gift.id}, '${gift.link}')">
             ${isTaken ? "Ya seleccionado" : "Seleccionar"}
           </button>
+
+          ${isTaken ? `<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>` : ""}
         </div>
       `;
 
@@ -403,6 +401,16 @@
     });
 
     window.open(link, "_blank");
+  };
+
+  // 🔥 LIBERAR (NUEVO)
+  window.releaseGift = async function(id) {
+    const confirmar = confirm("¿Deseas liberar este regalo?");
+    if (!confirmar) return;
+
+    await setDoc(doc(db, "gifts", String(id)), {
+      taken: false
+    });
   };
 </script>
 
