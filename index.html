@@ -111,6 +111,8 @@
       border-radius: 5px;
       border: 1px solid #ccc;
     }
+    #filter-container { text-align:center; margin:20px; }
+#filter { padding:5px 10px; }
   </style>
 </head>
 
@@ -124,18 +126,18 @@
      Cel: 3145658708
   </p>
 </header>
-<!-- FILTRO -->
-  <div style="text-align:center; margin:20px;">
+  
+<div id="filter-container">
   <label for="filter">Mostrar: </label>
-  <select id="filter" onchange="applyFilter()">
+  <select id="filter">
     <option value="all">Todos</option>
     <option value="available">Disponibles</option>
     <option value="reserved">Reservados</option>
   </select>
 </div>
-<!-- RESUMEN -->
+  
   <div id="summary">Cargando resumen...</div>
-  <!-- CONTENEDOR DE REGALOS -->
+
 <div class="container" id="gifts"></div>
 
 <script type="module">
@@ -392,6 +394,9 @@ const db = getFirestore(app);
  
 const container = document.getElementById("gifts");
 const summary = document.getElementById("summary");
+const filterSelect = document.getElementById("filter");
+
+let allGiftsData = {};
 
 // 🔥 TIEMPO REAL
 onSnapshot(collection(db, "gifts"), (snapshot) => {
@@ -401,16 +406,21 @@ onSnapshot(collection(db, "gifts"), (snapshot) => {
   renderSummary(data);
 });
 
-// renderiza regalos
-function renderGifts(data = {}) {
+filterSelect.addEventListener("change", renderGifts);
+
+function renderGifts() {
+  const filter = filterSelect.value;
   container.innerHTML = "";
 
   gifts.forEach(gift => {
-    const isTaken = data[gift.id]?.taken ?? gift.taken;
+    const data = allGiftsData[gift.id] || {};
+    const isTaken = data.taken || gift.taken || false;
+
+    if (filter === "available" && isTaken) return;
+    if (filter === "reserved" && !isTaken) return;
 
     const card = document.createElement("div");
     card.className = "card";
-
     card.innerHTML = `
       <img src="${gift.image}" onerror="this.src='https://placehold.co/300x200?text=Regalo'">
       <div class="card-content">
@@ -418,11 +428,9 @@ function renderGifts(data = {}) {
         <div class="status ${isTaken ? 'taken' : 'available'}">
           ${isTaken ? "Reservado" : "Disponible"}
         </div>
-
         <button ${isTaken ? "disabled" : ""} onclick="reserveGift(${gift.id}, '${gift.link}')">
           ${isTaken ? "Ya seleccionado ✅" : "Seleccionar"}
         </button>
-
         ${isTaken ? `<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>` : ""}
       </div>
     `;
@@ -430,30 +438,13 @@ function renderGifts(data = {}) {
   });
 }
 
-// renderiza conteo
-function renderSummary(data = {}) {
+function renderSummary() {
   const total = gifts.length;
-  const taken = gifts.filter(g => data[g.id]?.taken).length;
+  const taken = gifts.filter(g => (allGiftsData[g.id]?.taken || g.taken)).length;
   const available = total - taken;
-
   summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
 }
-// FILTRO
-function applyFilter() {
-  const filter = document.getElementById("filter").value;
-  const filteredData = {};
 
-  gifts.forEach(gift => {
-    const isTaken = allGiftsData[gift.id]?.taken ?? gift.taken;
-
-    if (filter === "available" && isTaken) return;
-    if (filter === "reserved" && !isTaken) return;
-
-    filteredData[gift.id] = allGiftsData[gift.id] || gift;
-  });
-
-  renderGifts(filteredData);
-}
 // 🔥 RESERVAR con nombre y teléfono
 window.reserveGift = async function(id, link) {
   const name = prompt("La siguiente información no será revelada. Ingresa tu nombre:");
@@ -464,7 +455,8 @@ window.reserveGift = async function(id, link) {
 
   const confirmar = confirm("¿Deseas reservar este regalo?");
   if (!confirmar) return;
-alert("¡Gracias! Tu información se guardó solo con fines informativos y no será revelado.");
+
+  alert("¡Gracias! Tu información se guardó solo con fines informativos y no será revelado.");
   const ref = doc(db, "gifts", String(id));
 
   try {
@@ -473,17 +465,11 @@ alert("¡Gracias! Tu información se guardó solo con fines informativos y no se
       if (docSnap.exists() && docSnap.data().taken === true) {
         throw "Este regalo ya fue reservado por otra persona 😢";
       }
-
       transaction.set(ref, { taken: true, name, phone }, { merge: true });
     });
 
-    // abrir link compatible móvil
     if (link && link !== "sin link") {
-      if (/Mobi|Android/i.test(navigator.userAgent)) {
-        window.location.href = link;
-      } else {
-        window.open(link, "_blank");
-      }
+      window.location.href = link;
     }
 
   } catch (error) {
