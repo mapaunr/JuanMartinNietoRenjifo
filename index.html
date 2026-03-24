@@ -4,39 +4,83 @@
 <meta charset="UTF-8">
 <title>Lista de Regalos Juan Martín</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body { font-family: 'Georgia', serif; background:#f7f4f1; margin:0; color:#5a4a42;}
-header { text-align:center; padding:20px; background:#e8ded6;}
-.container { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:20px; padding:20px;}
-.card { background:white; border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.08); transition:transform 0.2s;}
-.card:hover { transform:translateY(-5px);}
-img { width:100%; height:200px; object-fit:cover; background:#fff; padding:10px;}
-.card-content { padding:18px; text-align:center;}
-h3 { font-size:18px; margin-bottom:10px;}
-.status { font-size:14px; margin-bottom:12px;}
-.available { color:#7a9e7e; font-weight:bold; }
-.taken { color:#c2185b; font-weight:bold; }
-button { width:100%; padding:12px; border:none; border-radius:25px; background:#c8a27c; color:white; cursor:pointer; font-weight:bold; transition:.2s; margin-bottom:5px;}
-button:hover { background:#b48d67;}
-button:disabled { background:gray; cursor:not-allowed;}
-.undo { background:#c2185b; margin-top:5px;}
-.undo:hover { background:#a31648;}
-#summary { text-align:center; margin:20px; font-size:18px; font-weight:bold;}
-.input-popup { display:flex; flex-direction:column; gap:5px; margin-bottom:10px;}
-.input-popup input { padding:8px; border-radius:5px; border:1px solid #ccc;}
-.filter-container { text-align:center; margin:20px;}
+body {
+  font-family: 'Georgia', serif;
+  background-color: #f7f4f1;
+  margin: 0;
+  color: #5a4a42;
+}
+header {
+  text-align: center;
+  padding: 20px;
+  background-color: #e8ded6;
+}
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+.card {
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
+}
+.card:hover { transform: translateY(-5px); }
+img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  background: #fff;
+  padding: 10px;
+}
+.card-content {
+  padding: 18px;
+  text-align: center;
+}
+h3 { font-size: 18px; margin-bottom: 10px; }
+.status { font-size: 14px; margin-bottom: 12px; }
+.available { color: #7a9e7e; font-weight: bold; }
+.taken { color: #c2185b; font-weight: bold; }
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  background: #c8a27c;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+  margin-bottom: 5px;
+}
+button:hover { background: #b48d67; }
+button:disabled { background: gray; cursor: not-allowed; }
+.undo { background: #c2185b; margin-top: 5px; }
+.undo:hover { background: #a31648; }
+#summary { text-align: center; margin: 20px; font-size: 18px; font-weight: bold; }
+.filter-container { text-align: center; margin: 20px; }
+.filter-container select { padding: 8px; border-radius: 5px; }
+.input-popup { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.input-popup input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Lista de Regalos</h1>
-  <p>Baby Shower:🤎Juan Martín Nieto Renjifo🤎</p>
-  <p>Si deseas, puedes enviar los regalos a casa de María Paula Nieto: <br>
-     Calle 120 # 19a - 14 Edificio Alcaparros de Santa Barbara apto 303 - Bogotá, Colombia <br>
+  <p>Baby Shower: 🤎Juan Martín Nieto Renjifo🤎</p>
+  <p>Si deseas, puedes enviar los regalos a casa de María Paula Nieto:<br>
+     Calle 120 # 19a - 14 Edificio Alcaparros de Santa Barbara apto 303 - Bogotá, Colombia<br>
      Cel: 3145658708
   </p>
 </header>
+
+<div id="summary">Cargando resumen...</div>
 
 <div class="filter-container">
   <label for="filter">Mostrar: </label>
@@ -47,7 +91,6 @@ button:disabled { background:gray; cursor:not-allowed;}
   </select>
 </div>
 
-<div id="summary">Cargando resumen...</div>
 <div class="container" id="gifts"></div>
 
 <script type="module">
@@ -64,7 +107,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Lista de regalos
+const container = document.getElementById("gifts");
+const summary = document.getElementById("summary");
+const filterSelect = document.getElementById("filter");
+
+let allGiftsData = {};
+
+ // Lista de regalos
   const gifts = [
     {
     id: 1,
@@ -120,12 +169,7 @@ const db = getFirestore(app);
     image: "https://m.media-amazon.com/images/I/715tizOD5XL._SX679_.jpg",
     link: "https://www.amazon.com/baby-reg/catalina-renjifo-junio-2026-bogotaacute/3R0HURSXKC9P7"
   },
-    
-
-
-
-
-  {
+    {
     id: 10,
     name: "Juego de Paños para eructos",
     image: "https://m.media-amazon.com/images/I/91nR+nUUjOL._SX679_.jpg",
@@ -301,106 +345,87 @@ const db = getFirestore(app);
     link: "https://www.pepeganga.com/esterilizador-secador-de-accesorios-y-teteros-2en1-gris-dr-brown-s-149000/p?skuId=287049&source_impresee=sycjrnr9ahuhg5jqjqzzruqzzm"
   }
 ];
-const container = document.getElementById("gifts");
-const summary = document.getElementById("summary");
-const filterEl = document.getElementById("filter");
-let allGiftsData = {};
-let selectedGiftId = null;
-let selectedGiftLink = null;
+];
 
-const modal = document.getElementById("reserveModal");
-const nameInput = document.getElementById("resName");
-const phoneInput = document.getElementById("resPhone");
-const confirmBtn = document.getElementById("confirmReserve");
-
-// 🔥 TIEMPO REAL
-onSnapshot(collection(db, "gifts"), snapshot => {
-  allGiftsData = {};
-  snapshot.forEach(docSnap => allGiftsData[docSnap.id] = docSnap.data());
-  applyFilter();
-  renderSummary(allGiftsData);
-});
-
-// FILTRO
-filterEl.addEventListener("change", applyFilter);
-
-function applyFilter() {
-  const filter = filterEl.value;
+function renderGifts(dataToRender = {}) {
   container.innerHTML = "";
   gifts.forEach(gift => {
-    const taken = allGiftsData[gift.id]?.taken ?? gift.taken;
-    if (filter === "available" && taken) return;
-    if (filter === "reserved" && !taken) return;
-    renderGiftCard(gift, taken);
+    const isTaken = dataToRender[gift.id]?.taken ?? gift.taken;
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${gift.image}" onerror="this.src='https://placehold.co/300x200?text=Regalo'">
+      <div class="card-content">
+        <h3>${gift.name}</h3>
+        <div class="status ${isTaken?'taken':'available'}">${isTaken?'Reservado':'Disponible'}</div>
+        <button ${isTaken?'disabled':''} onclick="reserveGift(${gift.id})">
+          ${isTaken?'Ya seleccionado ✅':'Seleccionar'}
+        </button>
+        ${isTaken?`<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>
+        <button onclick="window.open('${gift.link}','_blank')">Ir al regalo</button>`:""}
+      </div>
+    `;
+    container.appendChild(card);
   });
-}
-
-function renderGiftCard(gift, isTaken) {
-  const card = document.createElement("div");
-  card.className = "card";
-  card.innerHTML = `
-    <img src="${gift.image}" onerror="this.src='https://placehold.co/300x200?text=Regalo'">
-    <div class="card-content">
-      <h3>${gift.name}</h3>
-      <div class="status ${isTaken ? 'taken' : 'available'}">${isTaken ? 'Reservado' : 'Disponible'}</div>
-      <button ${isTaken ? "disabled" : ""} onclick="openModal(${gift.id}, '${gift.link}')">
-        ${isTaken ? "Ya seleccionado ✅" : "Seleccionar"}
-      </button>
-      ${isTaken ? `<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>` : ""}
-    </div>
-  `;
-  container.appendChild(card);
 }
 
 function renderSummary(data = {}) {
   const total = gifts.length;
-  const taken = gifts.filter(g => data[g.id]?.taken).length;
+  const taken = gifts.filter(g=>data[g.id]?.taken).length;
   const available = total - taken;
   summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
 }
 
-// Modal
-function openModal(id, link) {
-  selectedGiftId = id;
-  selectedGiftLink = link;
-  nameInput.value = "";
-  phoneInput.value = "";
-  modal.style.display = "flex";
-}
-window.closeModal = function() { modal.style.display = "none"; }
+onSnapshot(collection(db,"gifts"),snapshot=>{
+  allGiftsData = {};
+  snapshot.forEach(doc=>allGiftsData[doc.id]=doc.data());
+  renderGifts(allGiftsData);
+  renderSummary(allGiftsData);
+});
 
-// Confirmar reserva
-confirmBtn.onclick = async function() {
-  const name = nameInput.value.trim();
-  const phone = phoneInput.value.trim();
-  if (!name) return alert("Debes ingresar tu nombre; este será eliminado si liberas la reserva");
-  if (!phone) return alert("Debes ingresar tu número de celular");
-  if (!confirm("¿Deseas reservar este regalo?")) return;
+filterSelect.addEventListener("change",()=>{
+  const filter = filterSelect.value;
+  const filteredData = {};
+  gifts.forEach(g=>{
+    const isTaken = allGiftsData[g.id]?.taken??g.taken;
+    if(filter==='available'&&isTaken) return;
+    if(filter==='reserved'&&!isTaken) return;
+    filteredData[g.id]=allGiftsData[g.id];
+  });
+  renderGifts(filteredData);
+});
 
-  const ref = doc(db, "gifts", String(selectedGiftId));
-  try {
-    await runTransaction(db, async (transaction) => {
+// Reservar regalo
+window.reserveGift = async function(id) {
+  alert("Tu información no será revelada y solo se usa con fines informativos.");
+  const name = prompt("Ingresa tu nombre (2 renglones si deseas usar enter):");
+  if(!name) return alert("Debes ingresar tu nombre");
+  const phone = prompt("Ingresa tu número de celular:");
+  if(!phone) return alert("Debes ingresar tu número de celular");
+  const confirmar = confirm("¿Deseas reservar este regalo?");
+  if(!confirmar) return;
+  const ref = doc(db,"gifts",String(id));
+  try{
+    await runTransaction(db,async transaction=>{
       const docSnap = await transaction.get(ref);
-      if (docSnap.exists() && docSnap.data().taken === true) {
-        throw "Este regalo ya fue reservado por otra persona 😢";
-      }
-      transaction.set(ref, { taken: true, name, phone }, { merge: true });
+      if(docSnap.exists()&&docSnap.data().taken) throw "Este regalo ya fue reservado por otra persona 😢";
+      transaction.set(ref,{taken:true,name,phone},{merge:true});
     });
-    modal.style.display = "none";
-    // Abrir link en misma pestaña
-    if (selectedGiftLink && selectedGiftLink !== "sin link") {
-      window.location.href = selectedGiftLink;
-    }
-  } catch (err) {
-    alert(err);
+    alert("¡Gracias! Tu reserva se guardó.");
+    // Actualiza la UI
+    renderGifts(allGiftsData);
+  }catch(e){
+    alert(e);
   }
-}
+};
 
 // Liberar regalo
-window.releaseGift = async function(id) {
-  if (!confirm("¿Deseas liberar este regalo?")) return;
-  await setDoc(doc(db, "gifts", String(id)), { taken:false, name:"", phone:"" }, { merge:true });
-}
+window.releaseGift = async function(id){
+  const confirmar = confirm("¿Deseas liberar este regalo?");
+  if(!confirmar) return;
+  await setDoc(doc(db,"gifts",String(id)),{taken:false,name:"",phone:""},{merge:true});
+};
+
 </script>
 </body>
 </html>
