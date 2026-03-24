@@ -408,11 +408,11 @@
   const confirmar = confirm("¿Deseas liberar este regalo?");
   if (!confirmar) return;
 
-  await updateDoc(doc(db, "gifts", String(id)), {
+  await setDoc(doc(db, "gifts", String(id)), {
     taken: false,
     name: "",
     phone: ""
-  });
+  }, { merge: true });
 };
 </script>
 
