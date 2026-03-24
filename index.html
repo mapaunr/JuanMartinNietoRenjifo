@@ -550,7 +550,7 @@ renderGifts();
 
 window.reserveGift=async function(id){
 
-const name=prompt("La sigueinte información no será revelada./nSolo será por si se presenta algún error/nTu nombre");
+const name=prompt("La siguiente información no será revelada. Solo será por si se presenta algún error. Ingresa tu nombre");
 
 if(!name) return;
 
@@ -567,7 +567,7 @@ await runTransaction(db,async t=>{
 const snap=await t.get(ref);
 
 if(snap.exists() && snap.data().taken)
-throw "Este regalo ya fue reservado";
+throw "¡Te han ganado! Este regalo ya fue reservado por alguien más. Intenta de nuevo o selecciona otro";
 
 t.set(ref,{taken:true,name,phone},{merge:true});
 
