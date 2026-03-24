@@ -301,86 +301,106 @@ const db = getFirestore(app);
     link: "https://www.pepeganga.com/esterilizador-secador-de-accesorios-y-teteros-2en1-gris-dr-brown-s-149000/p?skuId=287049&source_impresee=sycjrnr9ahuhg5jqjqzzruqzzm"
   }
 ];
-
-let allGiftsData = {};
-
 const container = document.getElementById("gifts");
 const summary = document.getElementById("summary");
 const filterEl = document.getElementById("filter");
+let allGiftsData = {};
+let selectedGiftId = null;
+let selectedGiftLink = null;
+
+const modal = document.getElementById("reserveModal");
+const nameInput = document.getElementById("resName");
+const phoneInput = document.getElementById("resPhone");
+const confirmBtn = document.getElementById("confirmReserve");
 
 // 🔥 TIEMPO REAL
 onSnapshot(collection(db, "gifts"), snapshot => {
   allGiftsData = {};
-  snapshot.forEach(doc => allGiftsData[doc.id] = doc.data());
-  renderGifts();
-  renderSummary();
+  snapshot.forEach(docSnap => allGiftsData[docSnap.id] = docSnap.data());
+  applyFilter();
+  renderSummary(allGiftsData);
 });
 
-// Filtrar en tiempo real
-filterEl.addEventListener("change", renderGifts);
+// FILTRO
+filterEl.addEventListener("change", applyFilter);
 
-function renderGifts() {
+function applyFilter() {
   const filter = filterEl.value;
   container.innerHTML = "";
-  
   gifts.forEach(gift => {
-    const data = allGiftsData[gift.id] || {};
-    const isTaken = data.taken ?? gift.taken ?? false;
-
-    if(filter==="available" && isTaken) return;
-    if(filter==="reserved" && !isTaken) return;
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img src="${gift.image}" onerror="this.src='https://placehold.co/300x200?text=Regalo'">
-      <div class="card-content">
-        <h3>${gift.name}</h3>
-        <div class="status ${isTaken?'taken':'available'}">
-          ${isTaken?"Reservado":"Disponible"}
-        </div>
-        <button ${isTaken?"disabled":""} onclick="reserveGift(${gift.id},'${gift.link}')">
-          ${isTaken?"Ya seleccionado ✅":"Seleccionar"}
-        </button>
-        ${isTaken?`<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>`:""}
-      </div>`;
-    container.appendChild(card);
+    const taken = allGiftsData[gift.id]?.taken ?? gift.taken;
+    if (filter === "available" && taken) return;
+    if (filter === "reserved" && !taken) return;
+    renderGiftCard(gift, taken);
   });
 }
 
-function renderSummary() {
+function renderGiftCard(gift, isTaken) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <img src="${gift.image}" onerror="this.src='https://placehold.co/300x200?text=Regalo'">
+    <div class="card-content">
+      <h3>${gift.name}</h3>
+      <div class="status ${isTaken ? 'taken' : 'available'}">${isTaken ? 'Reservado' : 'Disponible'}</div>
+      <button ${isTaken ? "disabled" : ""} onclick="openModal(${gift.id}, '${gift.link}')">
+        ${isTaken ? "Ya seleccionado ✅" : "Seleccionar"}
+      </button>
+      ${isTaken ? `<button class="undo" onclick="releaseGift(${gift.id})">Liberar</button>` : ""}
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function renderSummary(data = {}) {
   const total = gifts.length;
-  const taken = gifts.filter(g=> (allGiftsData[g.id]?.taken ?? g.taken)).length;
-  summary.textContent = `Disponibles: ${total-taken} | Reservados: ${taken} | Total: ${total}`;
+  const taken = gifts.filter(g => data[g.id]?.taken).length;
+  const available = total - taken;
+  summary.textContent = `Disponibles: ${available} | Reservados: ${taken} | Total: ${total}`;
 }
 
-// 🔥 RESERVAR
-window.reserveGift = async function(id, link){
-    const name = prompt("Tu información no será revelada.\n\nSolo será almacenada si confirmas tu selección; de lo contrario será eliminada.\n\nIngresa tu nombre:");
-  if(!name) return alert("Debes ingresar tu nombre");
-  const phone = prompt("Ingresa tu número de celular:");
-  if(!phone) return alert("Debes ingresar tu número de celular");
-  const confirmar = confirm("¿Deseas reservar este regalo?");
-  if(!confirmar) return;
+// Modal
+function openModal(id, link) {
+  selectedGiftId = id;
+  selectedGiftLink = link;
+  nameInput.value = "";
+  phoneInput.value = "";
+  modal.style.display = "flex";
+}
+window.closeModal = function() { modal.style.display = "none"; }
 
-  const ref = doc(db,"gifts",String(id));
-  try{
-    await runTransaction(db, async transaction=>{
+// Confirmar reserva
+confirmBtn.onclick = async function() {
+  const name = nameInput.value.trim();
+  const phone = phoneInput.value.trim();
+  if (!name) return alert("Debes ingresar tu nombre; este será eliminado si liberas la reserva");
+  if (!phone) return alert("Debes ingresar tu número de celular");
+  if (!confirm("¿Deseas reservar este regalo?")) return;
+
+  const ref = doc(db, "gifts", String(selectedGiftId));
+  try {
+    await runTransaction(db, async (transaction) => {
       const docSnap = await transaction.get(ref);
-      if(docSnap.exists() && docSnap.data().taken) throw "Este regalo ya fue reservado 😢";
-      transaction.set(ref,{taken:true,name,phone},{merge:true});
+      if (docSnap.exists() && docSnap.data().taken === true) {
+        throw "Este regalo ya fue reservado por otra persona 😢";
+      }
+      transaction.set(ref, { taken: true, name, phone }, { merge: true });
     });
-    if(link && link!=="sin link") window.open(link,"_blank");
-  }catch(e){alert(e);}
+    modal.style.display = "none";
+    // Abrir link en misma pestaña
+    if (selectedGiftLink && selectedGiftLink !== "sin link") {
+      window.location.href = selectedGiftLink;
+    }
+  } catch (err) {
+    alert(err);
+  }
 }
 
-// 🔥 LIBERAR
-window.releaseGift = async function(id){
-  const confirmar = confirm("¿Deseas liberar este regalo?");
-  if(!confirmar) return;
-  await setDoc(doc(db,"gifts",String(id)),{taken:false,name:"",phone:""},{merge:true});
+// Liberar regalo
+window.releaseGift = async function(id) {
+  if (!confirm("¿Deseas liberar este regalo?")) return;
+  await setDoc(doc(db, "gifts", String(id)), { taken:false, name:"", phone:"" }, { merge:true });
 }
 </script>
 </body>
 </html>
- 
