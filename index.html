@@ -118,8 +118,8 @@
 
 <header>
   <h1>Lista de Regalos</h1>
-  <p>Baby Shower: Juan Martín Nieto Renjifo 🤍</p>
-  <p>Si deseas, puedes enviar los regalos a: <br>
+  <p>Baby Shower:🤎Juan Martín Nieto Renjifo🤎</p>
+  <p>Si deseas, puedes enviar los regalos a casa de María Paula Nieto: <br>
      Calle 120 # 19a - 14 Edificio Alcaparros de Santa Barbara apto 303 - Bogotá, Colombia <br>
      Cel: 3145658708
   </p>
@@ -431,7 +431,7 @@ function renderSummary(data = {}) {
 
 // 🔥 RESERVAR con nombre y teléfono
 window.reserveGift = async function(id, link) {
-  const name = prompt("Ingresa tu nombre:");
+  const name = prompt("La siguiente información no será revelada. Ingresa tu nombre:");
   if (!name) return alert("Debes ingresar tu nombre");
 
   const phone = prompt("Ingresa tu número de celular:");
@@ -439,7 +439,7 @@ window.reserveGift = async function(id, link) {
 
   const confirmar = confirm("¿Deseas reservar este regalo?");
   if (!confirmar) return;
-alert("¡Gracias! Tu información se guardó solo con fines informativos.");
+alert("¡Gracias! Tu información se guardó solo con fines informativos y no será revelado.");
   const ref = doc(db, "gifts", String(id));
 
   try {
