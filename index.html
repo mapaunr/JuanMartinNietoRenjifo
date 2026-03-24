@@ -101,7 +101,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot } 
+import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, runTransaction } 
 from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -392,16 +392,32 @@ from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
   }
 
   // 🔥 RESERVAR
-  window.selectGift = async function(id, link) {
-    const confirmar = confirm("¿Deseas reservar este regalo?");
-    if (!confirmar) return;
+ window.selectGift = async function(id, link) {
+  const confirmar = confirm("¿Deseas reservar este regalo?");
+  if (!confirmar) return;
 
-    await setDoc(doc(db, "gifts", String(id)), {
-      taken: true
+  const ref = doc(db, "gifts", String(id));
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const docSnap = await transaction.get(ref);
+
+      if (docSnap.exists() && docSnap.data().taken === true) {
+        throw "Este regalo ya fue reservado por otra persona 😢";
+      }
+
+      transaction.set(ref, { taken: true }, { merge: true });
     });
 
-    window.open(link, "_blank");
-  };
+    // solo abre el link si sí lo logró reservar
+    if (link && link !== "sin link") {
+      window.open(link, "_blank");
+    }
+
+  } catch (error) {
+    alert(error);
+  }
+};
 
   // 🔥 LIBERAR (NUEVO)
  window.releaseGift = async function(id) {
