@@ -610,25 +610,7 @@ alert(e);
 
 }
 
-};
-
-
-/* LIBERAR */
-window.releaseGift = async function(id){
-
-if(!confirm("¿Liberar regalo?")) return;
-
-await setDoc(
-doc(db,"gifts",String(id)),
-{
-taken:false,
-name_comprador:deleteField(),
-phone:deleteField()
-},
-{merge:true}
-);
-
-};
+}
 
 </script>
 
